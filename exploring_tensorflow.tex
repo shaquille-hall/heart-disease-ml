@@ -1,0 +1,738 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{placeins}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Exploring Heart Disease Prediction Using Tensorflow} 
+
+\author{\IEEEauthorblockN{Shaquille Hall}
+\IEEEauthorblockA{\textit{CS 613 Machine Learning} \\
+\textit{Drexel University}\\
+Philadelphia, United States \\}
+}
+
+\maketitle
+
+\begin{abstract}
+This paper explores an application of Machine Learning (ML) in predicting the presence of heart disease based on underlying health conditions. In particular, it focuses on the use of Tensorflow to derive useful models for prediction using three popular training algorithms: Logistic Regression, K-Nearest neighbours, and Gradient Boosting Trees. To evaluate the proficiency of Tensorflow's estimators I compare results with Scikit-Learn.
+
+As a secondary study, I also attempt to assess Tensorflow's performance attributes and resource consumption for the execution of each algorithm. These are also compared with results from Scikit-Learn.
+\end{abstract}
+
+\begin{IEEEkeywords}
+tensor, gpu, imputation, 
+\end{IEEEkeywords}
+
+\section{Introduction}
+Heart disease is a leading cause of death in the United States. The Center for Disease Control estimates that over ~655,000 Americans die yearly by some form of heart disease\cite{b1}. In addition, the World Health Organization puts this number at around 17.9 million deaths globally\cite{b2}.  
+
+The presence of heart disease is particularly prevelant in individuals aged 60 and older. However, as we will discuss in the results section of this paper, factors like angina, blood cholesterol, blood sugar, and the health of heart contractions also play a significant role.
+
+\section{Tools}
+
+\subsection{Tensorflow}
+Tensorflow is an open-source Machine Learning platform that aims to simplify the training and adoption of ML models. It was started internally at Google in 2011, within Google Brain, and was first released to the public in 2015\cite{b3}. Its primary focus was, and remains the advancement of deep learning neural networks, and this is perhaps what it is most known for. However, Tensorflow also hosts a wide array of tools and libraries that are useful across supervised and unsupervised machine learning applications\cite{b4}. 
+
+
+\subsection{scikit-learn / sklearn}
+Initially developed in 2007, scikit-learn is a data analysis library of tools specifically crafted for the Python programming language. Because of this, naturally it also hosts a number of tools of interest to Machine Learning \cite{b5}.
+
+\subsection{Google Colaboratory}
+Google Colaboratory is an interactive browser-based Python editor and execution environment built on the Jupyter Notebooks framework. In particular, it provides free access to scalable Graphical Processing Units (GPUs). This makes it popular among machine learning researchers and data analysts for carrying out immense computational tasks\cite{b7}. I use this as my development environment during this experiment. 
+
+
+\section{Goals}
+There is a plethora of available literature examining the causes of heart disease. Thus my goal is not to recreate what’s already known. Instead, I aim to assess Tensorflow’s ability to satisfactorily produce results consistent with already discovered findings. 
+
+This paper outlines my attempts to:
+\begin{itemize}
+    \item Explore the relationship between heart disease and some of its known influencers using Tensorflow
+    \item Derive useful models for predicting heart disease based on known ML algorithms
+    \item Gain a deeper understanding of ML methodologies 
+    \item Gain an understanding of a popular machine learning library
+    \item Examine the compute performance of machine learning models
+\end{itemize}
+
+Throughout this paper, I seek to answer the following:
+\begin{itemize}
+    \item Of those selected, which Tensorflow approach will yield the best results (accuracy)?
+    \item What compute resources will Tensorflow consume to execute each algorithm?
+    \item Does Tensorflow produce results aligned with scientifically backed data?
+\end{itemize}
+
+\section{Data}
+To conduct this experiment, I used the Heart Disease Database from the University of California, Irvine (UCI) Machine Learning Repository\cite{b8}. This database consists of four data sets obtained from four different locations:
+
+\begin{itemize}
+    \item Cleveland Clinic Foundation 
+    \item Hungarian Institute of Cardiology, Budapest
+    \item V.A. Medical Center, Long Beach, CA 
+    \item University Hospital, Zurich, Switzerland 
+\end{itemize}
+
+Each dataset considers the following 14 attributes, and their indicators:
+\begin{itemize}
+    \item Age (age)
+    \item Sex (sex)
+    \item Chest pain type (cp):
+    \begin{itemize}
+        \item (1) Typical Angina 
+        \item (2) Atypical Angina 
+        \item (3) Non-anginal pain 
+        \item (4) Asymptomatic
+    \end{itemize}
+    \item Resting blood pressure (trestbps) measured in mm Hg 
+    \item Serum cholesterol (chol) in mg/dl
+    \item Fasting blood sugar (fbs) measured above or below 120 mg/dl
+    \begin{itemize}
+        \item (1) True 
+        \item (0) False 
+    \end{itemize}
+    \item Resting electrocardiographic results (restecg)
+    \begin{itemize}
+        \item (0) Normal 
+        \item (1) ST-T wave abnormality 
+        \item (2) Showing probable or definite left ventricular hypertrophy by Estes' criteria 
+    \end{itemize}
+    \item Maximum heart rate achieved (thalach)
+    \item Exercised induced angina (exang)
+    \begin{itemize}
+        \item (1) Yes 
+        \item (0) No 
+    \end{itemize}
+    \item ECG ST segment depression induced by exercise relative to rest (oldpeak)
+    \item Slope of the peak exercise ST segment 
+    \begin{itemize}
+        \item (1) Upsloping 
+        \item (2) Flat 
+        \item (3) Downsloping 
+    \end{itemize}
+    \item Number of major vessels colored by fluorosopy (ca)
+    \begin{itemize}
+        \item Range (0-3)
+    \end{itemize}
+    \item Thalium heart scan reading (thal)
+    \begin{itemize}
+        \item (3) Normal 
+        \item (6) Fixed defect
+        \item (7) Reversible defect
+    \end{itemize}
+    \begin{itemize}
+        \item Diagnosis of heart disease / Angiographic disease status  (num)
+        \begin{itemize}
+            \item (0) $<$ 50\% diameter narrowing 
+            \item (1) $>$ 50\% diameter narrowing 
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Handling Missing Data}
+As Newgard, Roger and Lewis highlights, datasets with all fields completed is a rare find\cite{b9}. Samples are likely to have missing values for some, possibly most, of the listed attributes. Conversely, attributes may be missing for some, most, or even all samples. 
+
+Regardless the reason, a researcher should be prepared to handle missing information. According to Rubin there are three main types of missing data\cite{b10}: 
+
+\subsubsection{Missing Completely At Random (MCAR)}
+The probability of a data point missing is the same for all samples. This directly implies that the reasons the data is missing are unrelated to the data itself\cite{b11}.
+
+\subsubsection{Missing At Random (MAR)}
+The probably of a data point missing is the same within the set of observed samples, but not related to the specific missing values. 
+
+\subsubsection{Missing Not At Random (MNAR)}
+The probability of a data point missing does not fall within the descripion of MCAR nor MAR. The probability of a data point missing varies for reasons unknown to us. 
+
+Missing data in the Cleveland dataset appears to be Missing Completely at Random and for very few samples. Because of this, I opted for listwise deletion for affected samples.
+
+In other cases the data appears to be Missing at Random. In these cases, I took a hybrid approach combining list-wise deletion, and median imputation\cite{b12}. The mean would also work here, and is likely a common choice. However I chose the median to avoid influence by outlier values in unfamiliar datasets:
+\begin{itemize}
+    \item if number of missing values $>$ 50\% number of values in the column
+    \begin{itemize} 
+    \item remove the entire column
+    \end{itemize}
+    \item else
+    \begin{itemize} 
+    \item impute the missing values with median of the values present
+    \end{itemize}
+\end{itemize}
+
+
+\section{Methodology}
+I decided to utilize three popular algorithms for this effort: Logistic Regression Classification, K-Nearest neighbours Classification and Gradient Boosting Classification. I chose these because they each take a different approach to supervised learning, and because both Tensorflow and scikit-learn have built-in classifiers, or estimators for each one. This allows for near equal comparisons.
+
+For each implementation, a Tensorflow model was fitted to the training data, then evaluated with a verification set (where it seemed appropriate), and used to predict values for a test set. Specific details are below. Accuracy was then calculated for each set of predictions.
+
+\subsection{Logistic Regression}
+Logistic regression is named for the logistic function at its core, also known as the sigmoid function:
+\begin{equation}
+    h_ \theta (x) = \frac{\mathrm{1} }{\mathrm{1} + e^- \theta^Tx } 
+\end{equation}
+
+From this, logistic regression provides a probabilistic output. That is, rather than producing an outcome x \( \in \mathbb{R} \), as is the case for Linear Regression, it produces a likelihood y such that:
+\begin{equation}
+    P(y=0|x) \leq y \leq P(y=1|x)
+\end{equation}
+
+This makes logistic regression particularly suitable for binary classification. This dataset identifies the presence of heart disease with values from 1-4 in the target column. However, any value greater than 0 is based on a 50$\%$ or more diameter narrowing - the true value being calculated, and a common indicator of heart disease \cite{b13}. Because of this, I thought it would be interesting to convert the problem space to one of binary classification by replacing all target values $>$ 0 with a value of 1, then apply logistic regression.
+
+Using the Tensorflow Sequential model, that is built on the Keras framework. I computed logistic regression using Stochastic Gradient Descent for optimization, and Euclidean Distance as my loss function. 
+\begin{equation}
+    d((x_i, y_i)) = \sqrt{\sum_{i=1}^{n} x_i - y_i}
+\end{equation}
+
+
+
+\subsection{K Nearest Neighbours}
+Nearest Neighbours classification is directly tied to the Proximity Principle - the idea that similar things exist close to each other\cite{b14}. Based on this, we compute predicted values of new samples based on the value of its closest neighbours already in the training set. Here presents a natural point of peculiarity for this algorithm - How do we determine the amount of neighbours to consider?
+
+%Maybe convert this to a note
+\textbf{Determining a good value for K: } Many libraries will choose a standard value for K - the number of neighbours to consider before assigning a label. In sklearn the default is 5\cite{b15}. However, as Harrison pointed out, the optimal value for K for a KNN classification depends on the data being worked on\cite{b16}. To obtain such value, I employ a naive method. First the data is split into train, validate and test sets. Using the train and validate sets, KNN is executed for each value in the validate set using Euclidean Distance for similarity, just as I did for Logistic Regression. This allowed me to tune the parameter k based on the dataset being worked on, avoid integrating my test set too early, and find the optimal value k such that $0 < k < len(samples)$. This optimal value for k is the used to determine labels for the test set in both skLearn and Tensorflow prediction.
+ 
+To finalize class prediction I take the mode of the k-nearest training neighbours for each sample in the test set. 
+
+
+\subsection{Gradient Boosting Trees}
+Gradient boosting, also known as Hypothesis Boosting, is the process of converting a collection of weak decision tree models into an overall stronger one\cite{b17}. The basic format is to minimize the model's aggregate loss by incrementally adding the outcome of weaker decision trees in a gradient descent fashion \cite{b18}.
+
+In this section I leave all default parameters unchanged for Tensorflow and scikit-learn evaluations. Particularly, pruning=None, learning\_rate=0.1, max\_number\_of\_trees=100 and max\_estimators=100.
+
+\subsection{Performance Monitoring}
+For each algorithm, I record GPU, Ram, CPU and Disk measurements using Python's GPUtil and PSUtil library. 
+
+\section{Results}
+Following are tables representing my findings for each algorithm. This is reduced to findings for the combined dataset, along with the individual dataset with the highest accuracy per algorithm. I also include a means archetype, representing the approximate characteristics of a sample with a true positive prediction. 
+
+% Logistic Regression Results
+% ######################################
+\subsection{Logistic Regression}
+\FloatBarrier
+\begin{table}[htbp]
+\caption{Accuracy}
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} &\textbf{Dataset Shape} \\
+\cline{1-4} 
+\textbf{Cleveland Dataset} & 0.553 & 0.689 & {303 x 14}\\
+\cline{1-4} 
+\textbf{Hungarian Dataset} & 0.67 & 0.79 & {294 x 11 }\\
+\cline{1-4} 
+\textbf{Switzerland Dataset} & 0.047 & 0.928 & {123 x 12}\\
+\cline{1-4} 
+\textbf{Long Beach Dataset} & 0.735 & 0.691 & {200 x 11}\\
+\cline{1-4} 
+\textbf{Combined Datasets} & 0.533 & 0.756 & {920 x 10}\\
+\cline{1-4} 
+\hline
+\end{tabular}
+\label{tab1}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[htbp]
+\caption{Highest Accuracy Dataset}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\text{Long Beach Dataset }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Runtime (ms)} & 19.35 & 5.03 \\
+\cline{1-3} 
+\textbf{Max Ram Used (gb)} & 289 & 487.0 \\
+\cline{1-3} 
+\textbf{Max Ram Utilization} & 1.92 & 3.22 \\
+\cline{1-3} 
+\textbf{Max GPUs} & 0 & 0 \\
+\cline{1-3} 
+\textbf{Max CPUs} & 2 & 2 \\
+\hline
+\end{tabular}
+\label{tab2}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[!htbp]
+\caption{Archetype Means}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Age} & 61.8 & 61.09 \\
+\cline{1-3} 
+\textbf{Sex} & 0.977 & 0.981 \\
+\cline{1-3} 
+\textbf{CP} & 3.689 & 3.71 \\
+\cline{1-3} 
+\textbf{Resting Blood Pressure} & 138.73 & 135.789 \\
+\cline{1-3} 
+\textbf{Serum Cholesterol} & 222.73 & 189.79 \\
+\cline{1-3} 
+\textbf{Fasting Blood Sugar} & 0.40 & 0.40 \\
+\cline{1-3} 
+\textbf{Rest ECG} & 0.73 & 0.807 \\
+\cline{1-3} 
+\textbf{Thalach} & 125.76 & 122.038 \\
+\cline{1-3} 
+\textbf{Exercise Induced Angina} & 0.84 & 0.788 \\
+\cline{1-3} 
+\textbf{Old Peak} & 1.573 & 1.553 \\
+\hline
+\end{tabular}
+\label{tab3}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[htbp]
+\caption{Combined Dataset}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Runtime} & 26.30ms & 24.34 \\
+\cline{1-3} 
+\textbf{Max Ram Used (gb)} & 289 & 487 \\
+\cline{1-3} 
+\textbf{Max Ram Utilization} & 1.92 & 3.22 \\
+\cline{1-3} 
+\textbf{Max GPUs} & 0 & 0 \\
+\cline{1-3} 
+\textbf{Max CPUs} & 2 & 2 \\
+\hline
+\end{tabular}
+\label{tab4}
+\end{center}
+\end{table}
+\FloatBarrier
+
+
+\FloatBarrier
+\begin{table}[!htbp]
+\caption{Combined Dataset Archetype Means}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Age} & 55.27 & 52.937 \\
+\cline{1-3} 
+\textbf{Sex} & 0.611 & 0.594 \\
+\cline{1-3} 
+\textbf{CP} & 3.50 & 3.406 \\
+\cline{1-3} 
+\textbf{Resting Blood Pressure} & 135.95 & 135.75 \\
+\cline{1-3} 
+\textbf{Serum Cholesterol} & 225.11 & 209.78 \\
+\cline{1-3} 
+\textbf{Rest ECG} & 0.44 & 0.719 \\
+\cline{1-3} 
+\textbf{Thalach} & 128.88 & 136.25 \\
+\cline{1-3} 
+\textbf{Exercise Induced Angina} & 0.50 & 0.375 \\
+\cline{1-3} 
+\textbf{Old Peak} & 0.933 & 0.988 \\
+\cline{1-3} 
+\hline
+\end{tabular}
+\label{tab5}
+\end{center}
+\end{table}
+\FloatBarrier
+
+
+% K-Nearest neighbours Results
+% ######################################
+\subsection{K-Nearest neighbours}
+\FloatBarrier
+\begin{table}[htbp]
+\caption{Accuracy}
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} &\textbf{Dataset Shape} \\
+\cline{1-4} 
+\textbf{Cleveland Dataset} & 0.604 & 0.604 & {303 x 14} \\
+\cline{1-4} 
+\textbf{Hungarian Dataset} & 0.562 & 0.562 & {294 x 11} \\
+\cline{1-4} 
+\textbf{Switzerland Dataset} & 0.432 & 0.486 & {123 x 12} \\
+\cline{1-4} 
+\textbf{Long Beach Dataset} & 0.283 & 0.283 & {200 x 11 } \\
+\cline{1-4} 
+\textbf{Combined Datasets} & 0.467 & 0.456 & {920 x 10} \\
+\cline{1-4} 
+\hline
+\end{tabular}
+\label{tab6}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[htbp]
+\caption{Highest Accuracy Dataset}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\text{Cleveland Dataset }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Runtime} & 206ms & 27.10ms \\
+\cline{1-3} 
+\textbf{Max Ram Used (gb)} & 229 & 231 \\
+\cline{1-3} 
+\textbf{Max Ram Utilization} & 1.518 & 1.532 \\
+\cline{1-3} 
+\textbf{Max GPUs} & 7 & 0 \\
+\cline{1-3} 
+\textbf{Max CPUs} & 2 & 2 \\
+\hline
+\end{tabular}
+\label{tab7}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[!htbp]
+\caption{Archetype Means}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Age} & 53.036 & 53.036 \\
+\cline{1-3} 
+\textbf{Sex} & 0.65 & 0.654 \\
+\cline{1-3} 
+\textbf{CP} & 2.709 & 2.709 \\
+\cline{1-3} 
+\textbf{Resting Blood Pressure} & 128.83 & 128.84 \\
+\cline{1-3} 
+\textbf{Serum Cholesterol} & 241.56 & 241.54 \\
+\cline{1-3} 
+\textbf{Fasting Blood Sugar} & 0.127 & 0.127 \\
+\cline{1-3} 
+\textbf{Rest ECG} & 0.927 & 0.927 \\
+\cline{1-3} 
+\textbf{Thalach} & 158.96 & 158.96 \\
+\cline{1-3} 
+\textbf{Exercise Induced Angina} & 0.109 & 0.109 \\
+\cline{1-3} 
+\textbf{Old Peak} & 0.507 & 0.507 \\
+\cline{1-3} 
+\textbf{Slope} & 1.38 & 1.38 \\
+\cline{1-3} 
+\textbf{Ca} & 0.236 & 0.236 \\
+\cline{1-3} 
+\textbf{Thalium} & 3.80 & 3.80 \\
+\cline{1-3} 
+\hline
+\multicolumn{3}{l}{$^{\mathrm{a}}$See Appendix for other archetypes}
+\end{tabular}
+\label{tab8}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[htbp]
+\caption{Combined Dataset}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Runtime} & 539.40ms & 37.88ms \\
+\cline{1-3} 
+\textbf{Max Ram Used (gb)} & 229 & 231 \\
+\cline{1-3} 
+\textbf{Max Ram Utilization} & 1.518 & 1.532 \\
+\cline{1-3} 
+\textbf{Max GPUs} & 19 & 0 \\
+\cline{1-3} 
+\textbf{Max CPUs} & 0 & 2 \\
+\hline
+\end{tabular}
+\label{tab9}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[!htbp]
+\caption{Combined Dataset Archetype Means}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Age} & 50.519 & 50.373 \\
+\cline{1-3} 
+\textbf{Sex} & 0.596 & 0.595 \\
+\cline{1-3} 
+\textbf{CP} & 2.88 & 2.849 \\
+\cline{1-3} 
+\textbf{Resting Blood Pressure} & 128.604 & 128.11 \\
+\cline{1-3} 
+\textbf{Serum Cholesterol} & 210.94 & 210.357 \\
+\cline{1-3} 
+\textbf{Rest ECG} & 0.55 & 0.539 \\
+\cline{1-3} 
+\textbf{Thalach} & 146.05 & 147.24 \\
+\cline{1-3} 
+\textbf{Exercise Induced Angina} & 0.202 & 0.183 \\
+\cline{1-3} 
+\textbf{Old Peak} & 0.461 & 0.421 \\
+\cline{1-3} 
+\hline
+\end{tabular}
+\label{tab10}
+\end{center}
+\end{table}
+\FloatBarrier
+
+% Gradient Boosting Results
+% ######################################
+\subsection{Gradient Boosting}
+\FloatBarrier
+\begin{table}[htbp]
+\caption{Accuracies}
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} & \textbf{Datashape Shape} \\
+\cline{1-4} 
+\textbf{Cleveland Dataset} & 0.544 & 0.573 & {303 x 14} \\
+\cline{1-4} 
+\textbf{Hungarian Dataset} & 0.720 & 0.74 & {294 x 11}\\
+\cline{1-4} 
+\textbf{Switzerland Dataset} & 0.452 & 0.381 & {123 x 12} \\
+\cline{1-4} 
+\textbf{Long Beach Dataset} & 0.308 & 0.308 & {200 x 11} \\
+\cline{1-4} 
+\textbf{Combined Datasets} & 0.644 & 0.555 & {920 x 10} \\
+\cline{1-4} 
+\hline
+\end{tabular}
+\label{tab11}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[htbp]
+\caption{Highest Accuracy Dataset}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\text{Hungarian Dataset }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Runtime} & 17328.02ms & 92.05ms \\
+\cline{1-3} 
+\textbf{Max Ram Used (gb)} & 485 & 485 \\
+\cline{1-3} 
+\textbf{Max Ram Utilization} & 3.216 & 3.216 \\
+\cline{1-3} 
+\textbf{Max GPUs} & 18 & 0 \\
+\cline{1-3} 
+\textbf{Max CPUs} & 2 & 2 \\
+\hline
+\multicolumn{3}{l}{$^{\mathrm{a}}$Sample of a Table footnote.}
+\end{tabular}
+\label{tab12}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[!htbp]
+\caption{Archetype Means}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Age} & 47.36 & 47.11 \\
+\cline{1-3} 
+\textbf{Sex} & 0.76 & 0.77 \\
+\cline{1-3} 
+\textbf{CP} & 2.805 & 2.837 \\
+\cline{1-3} 
+\textbf{Resting Blood Pressure} & 132.43 & 135.789 \\
+\cline{1-3} 
+\textbf{Serum Cholesterol} & 247.46 & 249.59 \\
+\cline{1-3} 
+\textbf{Fasting Blood Sugar} & 0.08 & 0.081 \\
+\cline{1-3} 
+\textbf{Rest ECG} & 0.152 & 0.149 \\
+\cline{1-3} 
+\textbf{Thalach} & 138.53 & 139.15 \\
+\cline{1-3} 
+\textbf{Exercise Induced Angina} & 0.319 & 0.284 \\
+\cline{1-3} 
+\textbf{Old Peak} & 1.604 & 0.588 \\
+\hline
+\end{tabular}
+\label{tab13}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[htbp]
+\caption{Combined Dataset}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Runtime} & 15327.70ms & 723.86ms \\
+\cline{1-3} 
+\textbf{Max Ram Used (gb)} & 485.0 & 485.0 \\
+\cline{1-3} 
+\textbf{Max Ram Utilization} & 3.216 & 3.216 \\
+\cline{1-3} 
+\textbf{Max GPUs} & 16.0 & 0 \\
+\cline{1-3} 
+\textbf{Max CPUs} & 2 & 2 \\
+\hline
+\end{tabular}
+\label{tab14}
+\end{center}
+\end{table}
+\FloatBarrier
+
+\FloatBarrier
+\begin{table}[!htbp]
+\caption{Combined Dataset Archetype Means}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{ }&\textbf{TensorFlow}&\textbf{skLearn} \\
+\cline{1-3} 
+\textbf{Age} & 51.38 & 50.88 \\
+\cline{1-3} 
+\textbf{Sex} & 0.62 & 0.60 \\
+\cline{1-3} 
+\textbf{CP} & 3.137 & 3.04 \\
+\cline{1-3} 
+\textbf{Resting Blood Pressure} & 130.64 & 135.75 \\
+\cline{1-3} 
+\textbf{Serum Cholesterol} & 217.38 & 229.72 \\
+\cline{1-3} 
+\textbf{Rest ECG} & 0.75 & 0.68 \\
+\cline{1-3} 
+\textbf{Thalach} & 137.28 & 142.04 \\
+\cline{1-3} 
+\textbf{Exercise Induced Angina} & 0.344 & 0.32 \\
+\cline{1-3} 
+\textbf{Old Peak} & 0.886 & 0.64 \\
+\cline{1-3} 
+\hline
+\end{tabular}
+\label{tab15}
+\end{center}
+\end{table}
+\FloatBarrier
+
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[scale=0.5]{gb_combined_cpu.png}
+    \caption{Gradient Boosting Combined Dataset Usage}
+\end{figure}
+
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[scale=0.5]{gb_ram.png}
+    \caption{Gradient Boosting Combined Dataset Ram}
+\end{figure}
+
+
+\begin{figure}[!htbp]
+    \centering
+    \includegraphics[scale=0.5]{gb_utilization.png}
+    \caption{Gradient Boosting Combined Dataset Ram Utilization}
+\end{figure}
+\FloatBarrier
+
+
+
+\section{Summary of Results}
+From these results we see both models achieved similar accuracy for each algorithm, except Logistic Regression. Here we saw the greatest variance between the two platforms. This makes it hard to draw any useful conclusions about this algorithm. 
+
+Accuracy for KNN were practically equal for both platforms, across all datasets. Although, here as with Logistic Regression, we see again that sklearn executes significantly faster. SkLearn also uses much less compute - no GPUs, compared with Tensorflow's 19 at one point handling the combined dataset.
+
+In the case of Gradient Boosting, we again see similar accuracy across the board for both platforms. However, the runtimes and resource consumption paint interesting pictures for Tensorflow. In this algorithm we we saw the most variation in gpu and ram usage. 
+
+Along with accuracy, I attempted to determine a likely archetype for a true positive prediction by taking the mean of each attribute among the true positive predictions. The results were largely inconclusive. 
+
+From the Results section above, considering the archetype of each of the best performing models we see a few ranges of values. Some of these align with values often associated with the presence of heart disease in patient. However some of the values also point in the opposite light. 
+
+For instance, each archetype identifies a Thalach (maximum heart rate) value above 100bpm - tachycardia. This aligns directly with the Mayo Clinic's guidance on tachycardia, and it's association with heart disease and heart failure\cite{b19}. 
+
+Additionally, each archetype highlights a Serum Cholesterol level above 200mg. This is another potential indicator of heart disease according to the National Cholesterol Education program\cite{b20}. 
+
+While these are good indicators, the discrepancies lie in other attributes. For example, the average age ($\approx$51) in each archetype is well below the expected mark of 60 according to the American Heart Association \cite{b21}.
+
+In addition, the archetypes also err on the occurrence of atypical, or non-anginal chest pain which themselves are vague determinants of heart disease\cite{b22}.
+
+Because of these reasons, I do not believe these archetypes are particularly suitable as models of a true positive heard disease sample. 
+
+In summary, the models for both platforms achieves similar accuracy for 2 out of 3 of the executed algorithms across all datasets, and we see scikit-learn performs significantly better than Tensorflow in each execution. Determining a reason for this was not apart of the study, but I attribute it in part to the graph data model that Tensorflow is built on, and will likely consider it for future iterations of this experiment. 
+
+
+
+\section{Conclusion}
+These experiments revealed a few things. Namely, Tensorflow can be used to predict values, including a heart disease diagnosis, at least as well as other popular ML platforms. However it will likely take significantly more time, and compute resources. That being said, Tensorflow is still a new platform, and undergoing rapid API iterations. This makes documentation obsolete fairly quickly, only increasing the learning curve for new users like myself. Additionally, Tensorflow's lexicon is different from what I was accustomed, and a bit more challenging to navigate than that of scikit-learn. Lastly Tensorflow's solutions were not as out-of-the-box as I had expected (or perhaps as I understood them at the time), and as exists in sklearn. This resulted in significant overhead ramping up on the technology.
+
+That being said, I believe as Tensorflow matures as a platform, these nuiances will be sorted, and make for a more pleasant experience to newcomers. 
+
+\section{Future Work}
+Although Tensorflow can execute many popular classifiers in supervised and unsupervised learning, I believe where it will truly excel is in Deep Neural Network (DNN) applications. We saw it's expensive runtimes for Logistic Regression, KNN, and Gradient Boosting, but I believe these may be on the wrong side of the efficiency curve; I think that a venture into DNN would prove to be a more efficient use of resources. Thus, my immediate next step would be to setup a similar experiment for a DNN application.  
+
+
+
+\begin{thebibliography}{00}
+\bibitem{b1} Center for Disease Control. (2015). Heart disease fact sheet. https://www.cdc.gov/heartdisease/facts. 
+\bibitem{b2} World Health Organization. Cardiovascular Diseases. https://www.who.int/health-topics/cardiovascular-diseases
+\bibitem{b3} Abadi M., Agarwal A., Barham P., Brevdo E., Chen Z., Citro C., Corrado G. S., Davis A., Dean J., Devin M., Ghemawat S., Goodfellow I., Harp A., Irving G., Isard M., Jia Y., Jozefowicz R., Kaiser L., Kudlur M., Levenberg J., ... Zheng X. (2015). TensorFlow: Large-Scale Machine Learning on Heterogeneous Distributed System. http://download.tensorflow.org/paper/whitepaper2015.pd
+\bibitem{b4} Tensorflow.org. https://tensorflow.org
+\bibitem{b5} scikit-learn: Machine Learning in Python. https://scikit-learn.org/stable/
+\bibitem{b6} Project Jupyter. https://jupyter.org/
+\bibitem{b7} Google Colaboratory. https://colab.research.google.com/notebooks/intro.ipynb
+\bibitem{b8} C.L. Blake and C.J. Merz. UCI repository of machine learning databases. (1998). https://archive.ics.uci.edu/ml/datasets/Heart+Disease
+\bibitem{b9} Newgard. C. D., Lewis. R. J. Missing Data How to Best Account for What is Not Known. Jama Guide to Statistics and Methods. (2015)
+\bibitem{b10} Kang. H., The Prevention and Handling of the Missing Data., (2013). https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3668100/
+\bibitem{b11} Buren. S., Flexible Imputation of Missing Data. 1.2 Concepts of MCAR, MAR and MNAR., https://stefvanbuuren.name/fimd/sec-MCAR.html
+\bibitem{b12} Zhang. Z., Missing Data Imputation: Focusing on Single Imputation., (2016). https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4716933/
+\bibitem{b13} Harris. P, Behar. V. S., Conley. M. J., Harrell. F. E., Lee. K. L., Peter.R. H., Kong. Y., Rosati. R. A., The Prognostic Significance of 50\% Coronary Stenosis in Medically Treated Patients with Coronary Artery Disease., https://www.ahajournals.org/doi/pdf/10.1161/01.CIR.62.2.240
+\bibitem{b14} AlleyDog. https://www.alleydog.com/glossary/definition.php?term=Principle+Of+Proximity
+\bibitem{b15} Scikit-Learn., sklearn.neighbors.KNeighborsClassifier., https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
+\bibitem{b16} Harrison. O., Machine Learning Basics with the K-Nearest Neighbors Algorithm., Towards Data Science., (2018)., https://towardsdatascience.com/machine-learning-basics-with-the-k-nearest-neighbors-algorithm-6a6e71d01761
+\bibitem{b17} Singh. H. Understanding Gradient Boosting Machines., Towards Data Science., https://towardsdatascience.com/understanding-gradient-boosting-machines-9be756fe76ab
+\bibitem{b18} Brownlee. J., A Gentle Introduction To The Gradient Boosting Algorithm for Machine Learning., Machine Learning Mastery., (2016)., https://machinelearningmastery.com/gentle-introduction-gradient-boosting-algorithm-machine-learning/
+\bibitem{b19} Mayo Clinic. Tachycardia., https://www.mayoclinic.org/diseases-conditions/tachycardia/symptoms-causes/syc-20355127
+\bibitem{b20} National Cholesterol Education Program., High Blood Cholesterol What You Need to Know., (2005)., https://www.nhlbi.nih.gov/files/docs/public/heart/wyntk.pdf , NIH Publication No. 05-3290
+\bibitem{b21} American Heart Association., Prevalence of Coronary Heart Disease By Age and Sex., (2009-2012)., https://www.heart.org/idc/groups/heart-public/@wcm/@sop/@smd/documents/downloadable/ucm\_449846.pdf
+\bibitem{b22} Bennett. K. R., Atypical Chest Pain - It's Time to Be Rid of It., The American Journal of Medicine., https://www.amjmed.com/article/S0002-9343(12)00488-3/pdf
+\end{thebibliography}
+
+\end{document}
+
